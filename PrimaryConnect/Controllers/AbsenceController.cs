@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.InkML;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrimaryConnect.Data;
 using PrimaryConnect.Dto;
 using PrimaryConnect.Models;
+using System.Globalization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -63,30 +66,82 @@ namespace PrimaryConnect.Controllers
             _PrimaryConnect_Db.absences.Remove(_Absence);
             await _PrimaryConnect_Db.SaveChangesAsync();
 
-            return NoContent(); // 204 No Content
+            return NoContent();
         }
 
+        [HttpPut("{id}", Name = "UpdateAbsence")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPut("{id}", Name = "UpdateAbsence")]
-        public async Task<IActionResult> UpdateAbsence(int id, Absence_Dto Updated_Absence)
+        public async Task<IActionResult> UpdateAbsence(int id,string status)
         {
-            if (id != Updated_Absence.Id)
+
+
+
+            var existingAbsence = await _PrimaryConnect_Db.absences.FindAsync(id);
+            if (existingAbsence == null)
             {
-                return BadRequest("ID mismatch.");
+                return NotFound("Absence not found.");
             }
 
-            Absence? existing_Absence = await _PrimaryConnect_Db.absences.FindAsync(id);
-            if (existing_Absence == null)
+
+
+            existingAbsence.title = status;
+
+
+
+
+
+            try
             {
-                return NotFound("Admin not found.");
+                await _PrimaryConnect_Db.SaveChangesAsync();
             }
-            existing_Absence = Updated_Absence.ToAbsence();
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to update: {ex.Message}");
+            }
 
-            await _PrimaryConnect_Db.SaveChangesAsync();
+            return NoContent();
+        }
 
-            return NoContent(); // 204 No Content
+        // GET: api/Absences/student-absences
+        [HttpGet("student-absences")]
+        public async Task<ActionResult<List<Absence_Dto>>> GetStudentAbsences(
+            [FromQuery] int studentId,
+            [FromQuery] string startDate,
+            [FromQuery] string endDate)
+        {
+            try
+            {
+                // Parse dates (assuming format yyyy-MM-dd)
+                DateTime start = DateTime.ParseExact(startDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                DateTime end = DateTime.ParseExact(endDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                var absences = await _PrimaryConnect_Db.absences
+                    .Where(a => a.StudentId == studentId &&
+                               a.Date >= start &&
+                               a.Date <= end)
+                    .OrderBy(a => a.Date)
+                    .Select(a => new Absence_Dto
+                    {
+                        Id = a.Id,
+                        Date = a.Date,
+                        Subject = a.Subject,
+                        title = a.title,
+                        // Map other properties as needed
+                    })
+                    .ToListAsync();
+
+                return Ok(absences);
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Invalid date format. Please use yyyy-MM-dd format.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
 

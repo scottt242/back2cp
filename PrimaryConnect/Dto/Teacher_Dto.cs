@@ -6,6 +6,8 @@ namespace PrimaryConnect.Dto
     {
         public string Subject { get; set; }
         public int SchoolId { get; set; }
+        public int age { get; set; }
+        public string gender { get; set; }
 
         public Teacher ToTeacher()
         {

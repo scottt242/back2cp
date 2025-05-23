@@ -69,7 +69,7 @@ namespace PrimaryConnect.Controllers
         }
 
 
-        [HttpPost("AddTeacher")]
+        [HttpPost("AddStudent")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Teacher>> AddTeacher(Teacher_Dto _teacher)
@@ -131,7 +131,8 @@ namespace PrimaryConnect.Controllers
             if (!string.IsNullOrWhiteSpace(teacher.PhoneNumber))
                 existingTeacher.PhoneNumber = teacher.PhoneNumber;
 
-            // Add checks for any other fields you want to support updating
+            existingTeacher.age = teacher.age;
+            existingTeacher.gender = teacher.gender;
 
             await _PrimaryConnect_Db.SaveChangesAsync();
             return NoContent();

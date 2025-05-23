@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using DocumentFormat.OpenXml.Office.CoverPageProps;
 using Microsoft.EntityFrameworkCore;
 namespace PrimaryConnect.Models
 {
@@ -6,6 +7,8 @@ namespace PrimaryConnect.Models
     {
         #region Properties
         public string Subject { get; set; }
+        public int age { get; set; }
+        public string gender { get; set; }
         #endregion
         #region ForeignKeies
 
